@@ -18,7 +18,7 @@
 2. Визуализация представлена в следующем пункте
 3. Форматирование из готовой реализации используется в модулях [ContourFileWorker](./ContourFileWorker.pas), [CoordinateConvertor](./CoordinateConvertor.pas) и [MainForm](./MainForm.pas)
 
-### Файл [recults.ktr]
+### Файл [recults.ktr](./build/results.ktr)
 Содержит точки, входящие в прямоугольник (-43601, -200933; -36210, -196468), также изменяется при введении других координат прямоугольника
 
 ## Визуализация
