@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls,
-  Contour, ContourFileWorker, CoordinateConvertor;
+  ContourFileWorker, Contour, CoordinateConvertor;
 
 type
   TForm1 = class(TForm)
@@ -49,10 +49,10 @@ implementation
 procedure TForm1.renderContourBitEx(const contourBit: IContour; color: TColor);
 var
   i: Integer;
-  point: TPointI;
+  point: TPointD;
   cnt: Integer;
 begin
-  self.Canvas.Pen.Width := 2;
+  self.Canvas.Pen.Width := 1;
   self.Canvas.Pen.Color := color;
   i := 0;
   while i < contourBit.getContourBitCount - 1 do
@@ -63,24 +63,24 @@ begin
       point.x := round(contourBit.getContourBit(i + 1).getPoint(0).getX);
       point.y := round(contourBit.getContourBit(i + 1).getPoint(0).getY);
       point := convertor.convert(point.x, point.y);
-      self.Canvas.MoveTo(point.x, point.y);
+      self.Canvas.MoveTo(round(point.x), round(point.y));
 
       point.x := round(contourBit.getContourBit(0).getPoint(0).getX);
       point.y := round(contourBit.getContourBit(0).getPoint(0).getY);
       point := convertor.convert(point.x, point.y);
-      self.Canvas.LineTo(point.x, point.y);
+      self.Canvas.LineTo(round(point.x), round(point.y));
     end
     else
     begin
       point.x := round(contourBit.getContourBit(i).getPoint(0).getX);
       point.y := round(contourBit.getContourBit(i).getPoint(0).getY);
       point := convertor.convert(point.x, point.y);
-      self.Canvas.MoveTo(point.x, point.y);
+      self.Canvas.MoveTo(round(point.x), round(point.y));
 
       point.x := round(contourBit.getContourBit(i + 1).getPoint(0).getX);
       point.y := round(contourBit.getContourBit(i + 1).getPoint(0).getY);
       point := convertor.convert(point.x, point.y);
-      self.Canvas.LineTo(point.x, point.y);
+      self.Canvas.LineTo(round(point.x), round(point.y));
     end;
 
     i := i + 2;
@@ -101,22 +101,22 @@ begin
   self.Edit4.Text := IntToStr(-196468);
 
   // X
-  self.TrackBar1.SetTick(1000);
-  self.TrackBar1.Min := -60000;
+  self.TrackBar1.SetTick(100);
+  self.TrackBar1.Min := -50000;
   self.TrackBar1.Max := -20000;
 
   // Y
-  self.TrackBar2.SetTick(1000);
+  self.TrackBar2.SetTick(100);
   self.TrackBar2.Min := -300000;
-  self.TrackBar2.Max := -100000;
+  self.TrackBar2.Max := -150000;
 end;
 
 procedure TForm1.renderContourBit(const contourBit: IContour; color: TColor);
 var
   i: Integer;
-  point: TPointI;
+  point: TPointD;
 begin
-  self.Canvas.Pen.Width := 2;
+  self.Canvas.Pen.Width := 1;
   self.Canvas.Pen.Color := color;
   for i := 0 to contourBit.getContourBitCount - 2 do
   begin
@@ -124,12 +124,12 @@ begin
     point.x := round(contourBit.getContourBit(i).getPoint(0).getX);
     point.y := round(contourBit.getContourBit(i).getPoint(0).getY);
     point := convertor.convert(point.x, point.y);
-    self.Canvas.MoveTo(point.x, point.y);
+    self.Canvas.MoveTo(round(point.x), round(point.y));
 
     point.x := round(contourBit.getContourBit(i + 1).getPoint(0).getX);
     point.y := round(contourBit.getContourBit(i + 1).getPoint(0).getY);
     point := convertor.convert(point.x, point.y);
-    self.Canvas.LineTo(point.x, point.y);
+    self.Canvas.LineTo(round(point.x), round(point.y));
 
     // Замкнутый контурбит соединяется с первой точкой
     if (i = contourBit.getContourBitCount - 2)
@@ -138,12 +138,12 @@ begin
       point.x := round(contourBit.getContourBit(i + 1).getPoint(0).getX);
       point.y := round(contourBit.getContourBit(i + 1).getPoint(0).getY);
       point := convertor.convert(point.x, point.y);
-      self.Canvas.MoveTo(point.x, point.y);
+      self.Canvas.MoveTo(round(point.x), round(point.y));
 
       point.x := round(contourBit.getContourBit(0).getPoint(0).getX);
       point.y := round(contourBit.getContourBit(0).getPoint(0).getY);
       point := convertor.convert(point.x, point.y);
-      self.Canvas.LineTo(point.x, point.y);
+      self.Canvas.LineTo(round(point.x), round(point.y));
     end;
   end;
 end;
@@ -161,19 +161,19 @@ end;
 
 procedure TForm1.renderWindow(rect: TRectF);
 var
-  point1: TPointI;
-  point2: TPointI;
+  point1: TPointD;
+  point2: TPointD;
 begin
   point1 := convertor.convert(round(rect.x1), round(rect.y1));
   point2 := convertor.convert(round(rect.x2), round(rect.y2));
-  self.Canvas.MoveTo(point1.x, point1.y);
-  self.Canvas.LineTo(point2.x, point1.y);
-  self.Canvas.MoveTo(point2.x, point1.y);
-  self.Canvas.LineTo(point2.x, point2.y);
-  self.Canvas.MoveTo(point2.x, point2.y);
-  self.Canvas.LineTo(point1.x, point2.y);
-  self.Canvas.MoveTo(point1.x, point2.y);
-  self.Canvas.LineTo(point1.x, point1.y);
+  self.Canvas.MoveTo(round(point1.x), round(point1.y));
+  self.Canvas.LineTo(round(point2.x), round(point1.y));
+  self.Canvas.MoveTo(round(point2.x), round(point1.y));
+  self.Canvas.LineTo(round(point2.x), round(point2.y));
+  self.Canvas.MoveTo(round(point2.x), round(point2.y));
+  self.Canvas.LineTo(round(point1.x), round(point2.y));
+  self.Canvas.MoveTo(round(point1.x), round(point2.y));
+  self.Canvas.LineTo(round(point1.x), round(point1.y));
 end;
 
 procedure TForm1.TrackBar1Change(Sender: TObject);
@@ -226,7 +226,6 @@ begin
   windowRect.x2 := StrToInt(self.Edit3.Text);
   windowRect.y2 := StrToInt(self.Edit4.Text);
   self.Canvas.Pen.Width	:= 1;
-  self.Canvas.Pen.Style := psDash;
   self.Canvas.Pen.Color := clRed;
   self.renderWindow(windowRect);
 

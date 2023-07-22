@@ -3,19 +3,15 @@ unit Contour;
 interface
 
 uses
-  System.Types, System.SysUtils, System.Variants, System.Classes;
+  System.Types, System.SysUtils, System.Variants, System.Classes, Math, CoordinateConvertor;
 
 type
   TRectF = record
     x1, y1, x2, y2: double;
   end;
 
-  TPointI = record
-    x, y: Integer;
-  end;
-
   TLine = record
-    startPoint, endPoint: TPointI;
+    startPoint, endPoint: TPointD;
   end;
 
   IContourPoint = interface
@@ -101,29 +97,88 @@ type
 
   function CutContoursByWindow(const contours: IContours; const window: TRectF): IContour;
 
-  function PointInRect(const point: TPointI; const rect: TRectF): Boolean;
+  function PointInRect(const point: TPointD; const rect: TRectF): Boolean;
 
-  function LineIntersectsRectangle(const line: TLine; const rect: TRectF): Boolean;
+  function LinesIntersect(const line: TLine; const line2: TLine; const rect: TRectF): Boolean;
+
+  function LineIntersectRectEx(const line: TLine; const rect: TRectF): Boolean;
+
+  function LineIntersectRect(const line: TLine; const rect: TRectF): Boolean;
 
 implementation
 
-{ LineIntersectsRectangle }
+{ LinesIntersect }
 
-function LineIntersectsRectangle(const line: TLine; const rect: TRectF): Boolean;
+function LinesIntersect(const line: TLine; const line2: TLine; const rect: TRectF): Boolean;
 var
-  lineLeft, lineRight, lineTop, lineBottom: Boolean;
+  s1, s2, s3, s4: double;
 begin
-  lineLeft := (line.startPoint.x <= rect.x2) and (line.endPoint.x >= rect.x1);
-  lineRight := (line.startPoint.x >= rect.x1) and (line.endPoint.x <= rect.x2);
-  lineTop := (line.startPoint.y <= rect.y2) and (line.endPoint.y >= rect.y1);
-  lineBottom := (line.startPoint.y >= rect.y1) and (line.endPoint.y <= rect.y2);
+  // Вычисляем значение детерминанта для каждой линии
+  S1 := (line.endPoint.x - line.startPoint.x) * (line2.startPoint.y - line.startPoint.y) - (line.endPoint.y - line.startPoint.y) * (line2.startPoint.x - line.startPoint.x);
+  S2 := (line.endPoint.x - line.startPoint.x) * (line2.endPoint.y - line.startPoint.y) - (line.endPoint.y - line.startPoint.y) * (line2.endPoint.x - line.startPoint.x);
+  S3 := (line2.endPoint.x - line2.startPoint.x) * (line.startPoint.y - line2.startPoint.y) - (line2.endPoint.y - line2.startPoint.y) * (line.startPoint.x - line2.startPoint.x);
+  S4 := (line2.endPoint.x - line2.startPoint.x) * (line.endPoint.y - line2.startPoint.y) - (line2.endPoint.y - line2.startPoint.y) * (line.endPoint.x - line2.startPoint.x);
 
-  result := (lineLeft or lineRight) and (lineTop or lineBottom);
+  // Проверяем условие пересечения
+  Result := (S1 * S2 < 0) and (S3 * S4 < 0);
+end;
+
+{ LineIntersectRectEx }
+
+function LineIntersectRectEx(const line: TLine; const rect: TRectF): Boolean;
+var
+  topLine: TLine;
+  rightLine: TLine;
+  botLine: TLine;
+  leftLine: TLine;
+begin
+  topLine.startPoint.x := rect.x1;
+  topLine.startPoint.y := rect.y1;
+  topLine.endPoint.x := rect.x2;
+  topLine.endPoint.y := rect.y1;
+
+  rightLine.startPoint.x := rect.x2;
+  rightLine.startPoint.y := rect.y1;
+  rightLine.endPoint.x := rect.x2;
+  rightLine.endPoint.y := rect.y2;
+
+  botLine.startPoint.x := rect.x1;
+  botLine.startPoint.y := rect.y2;
+  botLine.endPoint.x := rect.x2;
+  botLine.endPoint.y := rect.y2;
+
+  leftLine.startPoint.x := rect.x1;
+  leftLine.startPoint.y := rect.y1;
+  leftLine.endPoint.x := rect.x1;
+  leftLine.endPoint.y := rect.y2;
+
+  if LinesIntersect(line, topLine, rect) or
+     LinesIntersect(line, rightLine, rect) or
+     LinesIntersect(line, botLine, rect) or
+     LinesIntersect(line, leftLine, rect) then result := True
+  else result := False;
+end;
+
+{ LineIntersectRect }
+
+function LineIntersectRect(const line: TLine; const rect: TRectF): Boolean;
+begin
+  // Проверяем пересечение линии и прямоугольника
+  if (Line.StartPoint.X <= rect.X1) and (Line.EndPoint.X <= rect.X1) then
+    Result := False
+  else if (Line.StartPoint.X >= rect.X2) and (Line.EndPoint.X >= rect.X2) then
+    Result := False
+  else if (Line.StartPoint.Y <= rect.Y1) and (Line.EndPoint.Y <= rect.Y1) then
+    Result := False
+  else if (Line.StartPoint.Y >= rect.Y2) and (Line.EndPoint.Y >= rect.Y2) then
+    Result := False
+  else
+    Result := True;
 end;
 
 { PointInRect }
 
-function PointInRect(const point: TPointI; const rect: TRectF): Boolean;
+function PointInRect(const point: TPointD; const rect: TRectF): Boolean;
 begin
   result := (point.X >= rect.x1) and (point.X <= rect.x2) and
             (point.Y >= rect.y1) and (point.Y <= rect.y2);
@@ -135,8 +190,8 @@ function CutContoursByWindow(const contours: IContours; const window: TRectF): I
 var
   contIdx: Integer;
   i: Integer;
-  point: TPointI;
-  nextPoint: TPointI;
+  point: TPointD;
+  nextPoint: TPointD;
   checkLine: TLine;
   contourBitCount: Integer;
   closedFlag: Boolean;
@@ -191,7 +246,7 @@ begin
         checkLine.startPoint := point;
         checkLine.endPoint := nextPoint;
         // Если пересекает, добавить
-        if LineIntersectsRectangle(checkLine, window) then
+        if LineIntersectRectEx(checkLine, window) then
         begin
           insideContour.addContourBit(contours.getContour(contIdx).getContourBit(i));
           // Если текущая точка замыкается первой

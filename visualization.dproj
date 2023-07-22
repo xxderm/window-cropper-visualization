@@ -105,7 +105,9 @@
         </DCCReference>
         <DCCReference Include="Contour.pas"/>
         <DCCReference Include="ContourFileWorker.pas"/>
-        <DCCReference Include="CoordinateConvertor.pas"/>
+        <DCCReference Include="CoordinateConvertor.pas">
+            <Form>$R *.res</Form>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -132,7 +134,7 @@
                 </Source>
             </Delphi.Personality>
             <Deployment Version="4">
-                <DeployFile LocalName="Win32\Debug\visualization.exe" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile LocalName="build\visualization.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>visualization.exe</RemoteName>
                         <Overwrite>true</Overwrite>
